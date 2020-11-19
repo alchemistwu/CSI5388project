@@ -19,9 +19,9 @@ def get_victim_model(pretrain=True, task='mnist', verbose=0, target_size=48):
     input = tf.keras.layers.Input(shape=inputshape_dict[task])
     
     if pretrain:
-        vgg = tf.keras.applications.VGG16(weights='imagenet', include_top=False, input_shape=inputshape_dict[task])(input)
+        vgg = tf.keras.applications.VGG19(weights='imagenet', include_top=False, input_shape=inputshape_dict[task])(input)
     else:
-        vgg = tf.keras.applications.VGG16(weights=None, include_top=False, input_shape=inputshape_dict[task])(input)
+        vgg = tf.keras.applications.VGG19(weights=None, include_top=False, input_shape=inputshape_dict[task])(input)
     flatten = tf.keras.layers.GlobalMaxPool2D()(vgg)
     output = tf.keras.layers.Dense(10, activation='softmax')(flatten)
     model = tf.keras.Model(inputs=[input], outputs=[output])
@@ -31,7 +31,7 @@ def get_victim_model(pretrain=True, task='mnist', verbose=0, target_size=48):
     return model
 
 
-def get_attack_model(pretrain=True, task='mnist', verbose=0, target_size=48):
+def get_attack_model(pretrain=True, task='mnist', verbose=0, target_size=48, mixed=False, mixed_rate=0.5):
     """
     Due to the API limitation, shape of MNIST has to be resized as (32, 32, 3)
     :param pretrain: if Ture, return attack model with ImageNet weights
@@ -43,17 +43,28 @@ def get_attack_model(pretrain=True, task='mnist', verbose=0, target_size=48):
     input = tf.keras.layers.Input(shape=inputshape_dict[task])
 
     if pretrain:
-        mobile = tf.keras.applications.MobileNetV2(weights='imagenet', include_top=False, input_shape=inputshape_dict[task])(x)
+        vgg = tf.keras.applications.VGG16(weights='imagenet',
+                                                   include_top=False,
+                                                   input_shape=inputshape_dict[task])(input)
     else:
-        mobile = tf.keras.applications.MobileNetV2(weights=None, include_top=False, input_shape=inputshape_dict[task])(x)
-    flatten = tf.keras.layers.GlobalMaxPool2D()(mobile)
+        vgg = tf.keras.applications.VGG16(weights=None,
+                                                   include_top=False,
+                                                   input_shape=inputshape_dict[task])(input)
+    flatten = tf.keras.layers.GlobalMaxPool2D()(vgg)
     output = tf.keras.layers.Dense(10, activation='softmax')(flatten)
-    model = tf.keras.Model(inputs=[input], outputs=[output])
-    model.compile(loss='sparse_categorical_crossentropy', metrics=['acc'])
+
+    if mixed:
+        output2 = output
+        model = tf.keras.Model(inputs=[input], outputs=[output, output2])
+        model.compile(loss=['sparse_categorical_crossentropy', 'sparse_categorical_crossentropy'], metrics=['acc'],
+                      loss_weights=[mixed_rate, 1. - mixed_rate])
+    else:
+        model = tf.keras.Model(inputs=[input], outputs=[output])
+        model.compile(loss=['sparse_categorical_crossentropy'], metrics=['acc'])
     if verbose:
         model.summary()
     return model
 
 if __name__ == '__main__':
-    # model = get_attack_model(verbose=True, pretrain=True, task='cifar')
+    model = get_attack_model(verbose=True, pretrain=True, task='cifar', mixed=True)
     model = get_victim_model(target_size=224, verbose=True, task='mnist')
