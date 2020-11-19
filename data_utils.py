@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 np.random.seed(1)
 
-def get_mnist_data(split=0.5, verbose=False):
+def get_mnist_data(split=0.5, verbose=False, target_size=48):
     """
     Fetch the MNIST dataset in tf.dataset format 
     (after simple preprocessed including normalization, shuffling, gray to rgb, resizing)
@@ -37,18 +37,19 @@ def get_mnist_data(split=0.5, verbose=False):
 
     data_victim = tf.data.Dataset.from_tensor_slices((x_train[: int(x_train.shape[0] * split)],
                                                       y_train[: int(x_train.shape[0] * split)]))
-    data_victim = data_victim.map(lambda x, y: (tf.image.resize(x, (32, 32)), y))
+    data_victim = data_victim.map(lambda x, y: (tf.image.resize(x, (target_size, target_size)), y))
 
     data_attack= tf.data.Dataset.from_tensor_slices((x_train[int(x_train.shape[0] * split):],
                                                       y_train[int(x_train.shape[0] * split):]))
-    data_attack = data_attack.map(lambda x, y: (tf.image.resize(x, (32, 32)), y))
+    data_attack = data_attack.map(lambda x, y: (tf.image.resize(x, (target_size, target_size)), y))
 
     data_test= tf.data.Dataset.from_tensor_slices((x_test, y_test))
-    data_test = data_test.map(lambda x, y: (tf.image.resize(x, (32, 32)), y))
+    data_test = data_test.map(lambda x, y: (tf.image.resize(x, (target_size, target_size)), y))
 
     if verbose:
         plt.figure(figsize=(10, 10))
         for i, (image, label) in enumerate(data_victim.take(9)):
+            print(image.shape)
             ax = plt.subplot(3, 3, i + 1)
             plt.imshow(image)
             plt.title(int(label))
@@ -57,6 +58,7 @@ def get_mnist_data(split=0.5, verbose=False):
 
         plt.figure(figsize=(10, 10))
         for i, (image, label) in enumerate(data_attack.take(9)):
+            print(image.shape)
             ax = plt.subplot(3, 3, i + 1)
             plt.imshow(image)
             plt.title(int(label))
@@ -65,6 +67,7 @@ def get_mnist_data(split=0.5, verbose=False):
 
         plt.figure(figsize=(10, 10))
         for i, (image, label) in enumerate(data_test.take(9)):
+            print(image.shape)
             ax = plt.subplot(3, 3, i + 1)
             plt.imshow(image)
             plt.title(int(label))
@@ -72,7 +75,7 @@ def get_mnist_data(split=0.5, verbose=False):
         plt.show()
     return data_victim, data_attack, data_test
 
-def get_cifar_data(split=0.5, verbose=False):
+def get_cifar_data(split=0.5, verbose=False, target_size=48):
     """
     Fetch the CIFAR10 dataset in tf.dataset format
     (after simple preprocessed including normalization, shuffling)
@@ -94,11 +97,15 @@ def get_cifar_data(split=0.5, verbose=False):
 
     data_victim = tf.data.Dataset.from_tensor_slices((x_train[: int(x_train.shape[0] * split)],
                                                       y_train[: int(x_train.shape[0] * split)]))
+    data_victim = data_victim.map(lambda x, y: (tf.image.resize(x, (target_size, target_size)), y))
 
     data_attack= tf.data.Dataset.from_tensor_slices((x_train[int(x_train.shape[0] * split):],
                                                       y_train[int(x_train.shape[0] * split):]))
+    data_attack = data_attack.map(lambda x, y: (tf.image.resize(x, (target_size, target_size)), y))
+
 
     data_test= tf.data.Dataset.from_tensor_slices((x_test, y_test))
+    data_test = data_test.map(lambda x, y: (tf.image.resize(x, (target_size, target_size)), y))
 
     if verbose:
         plt.figure(figsize=(10, 10))
@@ -119,6 +126,7 @@ def get_cifar_data(split=0.5, verbose=False):
 
         plt.figure(figsize=(10, 10))
         for i, (image, label) in enumerate(data_test.take(9)):
+
             ax = plt.subplot(3, 3, i + 1)
             plt.imshow(image)
             plt.title(int(label))
@@ -128,4 +136,4 @@ def get_cifar_data(split=0.5, verbose=False):
 
 if __name__ == '__main__':
     get_mnist_data(verbose=True)
-    get_cifar_data(verbose=True)
+    # get_cifar_data(verbose=True)
