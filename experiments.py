@@ -177,7 +177,7 @@ def get_attack_data(task='mnist', use_pretrain_victim=False, target_size=48, spl
     return data_victim, data_test
 
 def train_attack_model(task='mnist', pretrain=False, target_size=48,
-                       split=0.7, multi_gpu=True, batch_size=256, mixed=False, use_pretrain_victim=False):
+                       split=0.5, multi_gpu=True, batch_size=256, mixed=False, use_pretrain_victim=False):
 
     data_victim, data_test = get_attack_data(use_pretrain_victim=use_pretrain_victim,
                                              task=task,
@@ -197,6 +197,8 @@ def train_attack_model(task='mnist', pretrain=False, target_size=48,
         attributes.append('pretrain')
     if mixed:
         attributes.append('mixed')
+    if use_pretrain_victim:
+        attributes.append('usePretrain')
 
     with strategy.scope():
         model = get_attack_model(pretrain=pretrain, task=task, target_size=target_size, mixed=mixed)

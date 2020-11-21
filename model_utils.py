@@ -17,19 +17,22 @@ def get_victim_model(pretrain=True, task='mnist', verbose=0, target_size=48):
     """
     inputshape_dict={'mnist':(target_size, target_size, 3), 'cifar': (target_size, target_size, 3)}
     input = tf.keras.layers.Input(shape=inputshape_dict[task])
-    
     if pretrain:
-        vgg = tf.keras.applications.VGG19(weights='imagenet', include_top=False, input_shape=inputshape_dict[task])(input)
+        m = tf.keras.applications.VGG16(weights='imagenet',
+                                                   include_top=False,
+                                                   input_shape=inputshape_dict[task])(input)
     else:
-        vgg = tf.keras.applications.VGG19(weights=None, include_top=False, input_shape=inputshape_dict[task])(input)
-    flatten = tf.keras.layers.GlobalMaxPool2D()(vgg)
+        m = tf.keras.applications.VGG16(weights=None,
+                                                   include_top=False,
+                                                   input_shape=inputshape_dict[task])(input)
+
+    flatten = tf.keras.layers.GlobalMaxPool2D()(m)
     output = tf.keras.layers.Dense(10, activation='softmax')(flatten)
     model = tf.keras.Model(inputs=[input], outputs=[output])
     model.compile(loss='sparse_categorical_crossentropy', metrics=['acc'])
     if verbose:
         model.summary()
     return model
-
 
 def get_attack_model(pretrain=True, task='mnist', verbose=0, target_size=48, mixed=False, mixed_rate=0.5):
     """
@@ -41,16 +44,12 @@ def get_attack_model(pretrain=True, task='mnist', verbose=0, target_size=48, mix
     """
     inputshape_dict={'mnist':(target_size, target_size, 3), 'cifar': (target_size, target_size, 3)}
     input = tf.keras.layers.Input(shape=inputshape_dict[task])
-
     if pretrain:
-        vgg = tf.keras.applications.VGG16(weights='imagenet',
-                                                   include_top=False,
-                                                   input_shape=inputshape_dict[task])(input)
+        m = tf.keras.applications.ResNet50(weights='imagenet', include_top=False, input_shape=inputshape_dict[task])(input)
     else:
-        vgg = tf.keras.applications.VGG16(weights=None,
-                                                   include_top=False,
-                                                   input_shape=inputshape_dict[task])(input)
-    flatten = tf.keras.layers.GlobalMaxPool2D()(vgg)
+        m = tf.keras.applications.ResNet50(weights=None, include_top=False, input_shape=inputshape_dict[task])(input)
+
+    flatten = tf.keras.layers.GlobalMaxPool2D()(m)
     output = tf.keras.layers.Dense(10, activation='softmax')(flatten)
 
     if mixed:
