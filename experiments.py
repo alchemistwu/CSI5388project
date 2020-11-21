@@ -8,20 +8,20 @@ class SaveBestModel(tf.keras.callbacks.Callback):
     """
     Callbacks for saving the model with lowest val_acc
     """
-    def __init__(self, filepath, model_name, monitor='val_acc'):
+    def __init__(self, filepath, model_name, monitor='val_loss'):
         super(SaveBestModel, self).__init__()
         self.model_name = model_name
         self.best_weights = None
         self.file_path = filepath
-        self.best = 0.
+        self.best = float('inf')
         self.monitor = monitor
 
     def on_epoch_end(self, epoch, logs=None):
         current = logs.get(self.monitor)
         if not current:
-            current = 0.0
+            current = float('inf')
 
-        if np.less(self.best, current):
+        if np.less(current, self.best):
             self.best = current
             self.best_weights = self.model.get_weights()
 
@@ -63,9 +63,9 @@ def train_model(model, train_data, test_data, type, batch_size=128, attributes=[
     model_name = "_".join([str(item) for item in attributes])
     if 'mixed' in attributes:
         model.fit(train_data, epochs=100, validation_data=test_data, verbose=1, batch_size=batch_size,
-                  callbacks=[SaveBestModel(type, model_name, monitor='val_dense_1_acc'),
+                  callbacks=[SaveBestModel(type, model_name, monitor='val_loss'),
                              CSVLogger('logs/%s.csv'% (type + '_' + model_name)),
-                             EarlyStopping(monitor='val_dense_1_loss', patience=10)
+                             EarlyStopping(monitor='val_loss', patience=10)
                              ])
     else:
         model.fit(train_data, epochs=100, validation_data=test_data, verbose=1, batch_size=batch_size,
@@ -183,10 +183,6 @@ def train_attack_model(task='mnist', pretrain=False, target_size=48,
                                              task=task,
                                              target_size=target_size,
                                              split=split, mixed=mixed)
-    # if task == 'mnist':
-    #     data_victim, data_attack, data_test = get_mnist_data(target_size=target_size, split=split)
-    # else:
-    #     data_victim, data_attack, data_test = get_cifar_data(target_size=target_size, split=split)
 
     if multi_gpu:
         strategy = tf.distribute.MirroredStrategy()
