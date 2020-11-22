@@ -73,6 +73,19 @@ def train_model(model, train_data, test_data, type, batch_size=128, attributes=[
                              EarlyStopping(monitor='val_loss', patience=10)])
 
 def train_victim_model(task='mnist', pretrain=False, target_size=48, split=0.7, multi_gpu=True, batch_size=256):
+    """
+    For training the victim model,
+    the model weights will be saved in folder 'victim',
+    logs will be stored in folder 'logs'
+
+    :param task: 'mnist' or 'cifar'
+    :param pretrain: use pretrain weights on ImageNet or Not
+    :param target_size: input size of the model
+    :param split: percentage for training the victim model and for the attack
+    :param multi_gpu: if True, use multiple gpu to calculate
+    :param batch_size: batch size
+    :return:
+    """
     if task == 'mnist':
         data_victim, data_attack, data_test = get_mnist_data(target_size=target_size, split=split)
     else:
@@ -91,6 +104,20 @@ def train_victim_model(task='mnist', pretrain=False, target_size=48, split=0.7, 
 
 def get_attack_data(task='mnist', use_pretrain_victim=False, target_size=48, split=0.7, batch_size=256, mixed=False,
                     verbose=False):
+    """
+    Retrieving the data for training attack model,
+    since the labels should be predicted by the victim model,
+    it uses GPU to calculate.
+    :param task: 'mnist' or 'cifar'
+    :param use_pretrain_victim: use the victim model with pretrain weights or not
+    :param target_size: the size of model's input
+    :param split: percentage for training the victim model and for the attack
+    :param batch_size: batch size
+    :param mixed: if True, use combined losses, 0.5 for victim model predicted labels, 0.5 for ground truth loss
+    Loss = 0.5*sparse_category_entropy(Y_victim, Y_pred) + 0.5*sparse_category_entropy(Y_true, Y_pred)
+    :param verbose: If True, show some samples of data.
+    :return: victim model's labels and ground truth labels in tensorflow dataset format
+    """
     if task == 'mnist':
         data_victim, data_attack, data_test = get_mnist_data(target_size=target_size, split=split)
     else:
@@ -178,7 +205,22 @@ def get_attack_data(task='mnist', use_pretrain_victim=False, target_size=48, spl
 
 def train_attack_model(task='mnist', pretrain=False, target_size=48,
                        split=0.5, multi_gpu=True, batch_size=256, mixed=False, use_pretrain_victim=False):
+    """
+    For training the attack model,
+    the model weights will be saved in folder 'attack',
+    logs will be stored in folder 'logs'
 
+    :param task: 'mnist' or 'cifar'
+    :param pretrain: use pretrain weights on ImageNet or Not
+    :param target_size: input size of the model
+    :param split: percentage for training the victim model and for the attack
+    :param multi_gpu: if True, use multiple gpu to calculate
+    :param batch_size: batch size
+    :param mixed: if True, use combined losses, 0.5 for victim model predicted labels, 0.5 for ground truth loss
+    Loss = 0.5*sparse_category_entropy(Y_victim, Y_pred) + 0.5*sparse_category_entropy(Y_true, Y_pred)
+    :param use_pretrain_victim: if True, use the victim model with pretrain weights
+    :return:
+    """
     data_victim, data_test = get_attack_data(use_pretrain_victim=use_pretrain_victim,
                                              task=task,
                                              target_size=target_size,
@@ -202,15 +244,24 @@ def train_attack_model(task='mnist', pretrain=False, target_size=48,
     
 
 if __name__ == '__main__':
+    """
+    All setting here:
+    """
     pretrain = [True, False]
     task = ['mnist', 'cifar']
     use_pretrain_victim = [True, False]
     mixed = [True, False]
 
+    """
+    if you do not have victim model trained weights
+    """
     for pretrain_item in pretrain:
         for task_item in task:
             train_victim_model(pretrain=pretrain_item, task=task_item, split=0.5)
 
+    """
+    Train the victim model
+    """
     for pretrain_item in pretrain:
         for task_item in task:
             for use_item in use_pretrain_victim:
