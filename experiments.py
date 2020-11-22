@@ -3,7 +3,7 @@ from data_utils import *
 from tensorflow.keras.callbacks import CSVLogger, EarlyStopping
 import os
 import shutil
-
+import argparse
 class SaveBestModel(tf.keras.callbacks.Callback):
     """
     Callbacks for saving the model with lowest val_acc
@@ -251,23 +251,35 @@ if __name__ == '__main__':
     task = ['mnist', 'cifar']
     use_pretrain_victim = [True, False]
     mixed = [True, False]
+    split = 0.5
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-victim', type=bool,
+                        help='Train victim model, if you have victim models weights already, do not specify',
+                        dest='victim', const=True, default=False, nargs='?')
+    parser.add_argument('-attack', type=bool,
+                        help='Train attack model, specify this when you have victim model weights ready',
+                        dest='attack', const=True, default=False, nargs='?')
+    args = parser.parse_args()
 
     """
     if you do not have victim model trained weights
     """
-    for pretrain_item in pretrain:
-        for task_item in task:
-            train_victim_model(pretrain=pretrain_item, task=task_item, split=0.5)
+    if args.victim:
+        for pretrain_item in pretrain:
+            for task_item in task:
+                train_victim_model(pretrain=pretrain_item, task=task_item, split=split)
 
     """
     Train the victim model
     """
-    for pretrain_item in pretrain:
-        for task_item in task:
-            for use_item in use_pretrain_victim:
-                for mix_item in mixed:
-                    train_attack_model(task=task_item, pretrain=pretrain_item, use_pretrain_victim=use_item, multi_gpu=True,
-                                       mixed=mix_item)
+    if args.attack:
+        for pretrain_item in pretrain:
+            for task_item in task:
+                for use_item in use_pretrain_victim:
+                    for mix_item in mixed:
+                        train_attack_model(task=task_item, pretrain=pretrain_item, use_pretrain_victim=use_item, multi_gpu=True,
+                                           mixed=mix_item, split=split)
 
 
 
