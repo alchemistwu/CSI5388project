@@ -8,6 +8,8 @@ Note: Use sparse_category_crossentropy rather than one-hot encoder for saving me
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import os
 
 np.random.seed(1)
 
@@ -134,6 +136,29 @@ def get_cifar_data(split=0.5, verbose=False, target_size=48):
         plt.show()
     return data_victim, data_attack, data_test
 
+def find_the_highest_val_acc(csvfile):
+    df = pd.read_csv(csvfile)
+    for item in df.columns:
+        if "val" in item and "acc" in item:
+            break
+    values = np.array(df[item])
+    return np.max(values)
+
+def present_val_acc_for_all():
+    logdir = "logs"
+    tuples_mnist = [(item.split('.csv')[0], os.path.join(logdir, item)) for item in os.listdir(logdir) if "mnist" in item]
+    for tup in tuples_mnist:
+        print(tup[0])
+        print(find_the_highest_val_acc(tup[1]))
+        print("================================")
+
+    tuples_cifar = [(item.split('.csv')[0], os.path.join(logdir, item)) for item in os.listdir(logdir) if "cifar" in item]
+    for tup in tuples_cifar:
+        print(tup[0])
+        print(find_the_highest_val_acc(tup[1]))
+        print("================================")
+
 if __name__ == '__main__':
-    get_mnist_data(verbose=True)
+    # get_mnist_data(verbose=True)
     # get_cifar_data(verbose=True)
+    present_val_acc_for_all()
