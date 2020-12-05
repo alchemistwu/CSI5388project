@@ -20,3 +20,5 @@
 `Loss = 0.5*sparse_category_entropy(Y_victim, Y_pred) + 0.5*sparse_category_entropy(Y_true, Y_pred)`
 * `pretrain`: training the attack model from weights prtained on ImageNet
 * `usePretrain`: using the victim which trained from weights prtained on ImageNet
+## Access To Model Weights and Training Logs:
+[download here](https://drive.google.com/file/d/1YIEpnD1LxCWcSWuqmdMC_4rxsUkQAJ9H/view?usp=sharing)
